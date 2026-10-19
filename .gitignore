@@ -1,0 +1,6 @@
+# Archives et clés : ne jamais versionner
+*.age
+*.age.sha256
+*identity*.txt
+recipient.txt
+.DS_Store
