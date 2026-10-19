@@ -57,20 +57,32 @@ if [ -f "$ARCHIVE.sha256" ]; then
   echo "→ Empreinte SHA-256 vérifiée."
 fi
 
-umask 077
-mkdir -p "$DEST"
-
+# --- identité disponible ? (avant de créer quoi que ce soit) ---
 case "$MODE" in
   keychain)
     command -v security >/dev/null 2>&1 || die "'security' absent (pas macOS) : utiliser -i ou -p"
     security find-generic-password -s "$SVC" -a "$USER" >/dev/null 2>&1 \
       || die "identité '$SVC' absente du Trousseau (archive chiffrée par passphrase ? utiliser -p)"
+    ;;
+  file)
+    [ -r "$IDENTITY" ] || die "fichier d'identité illisible : $IDENTITY"
+    ;;
+esac
+
+umask 077
+mkdir -p "$DEST"
+
+# en cas d'échec, rien n'est supprimé automatiquement : on prévient seulement
+DONE=0
+trap '[ "$DONE" = 1 ] || echo "⚠️  Restauration interrompue : $DEST peut contenir des fichiers partiels, à vérifier ou supprimer." >&2' EXIT
+
+case "$MODE" in
+  keychain)
     echo "→ Déchiffrement (identité du Trousseau, jamais sur disque) dans : $DEST"
     age -d -i <(security find-generic-password -s "$SVC" -a "$USER" -w) "$ARCHIVE" \
       | tar -xzf - -C "$DEST"
     ;;
   file)
-    [ -r "$IDENTITY" ] || die "fichier d'identité illisible : $IDENTITY"
     echo "→ Déchiffrement (fichier d'identité) dans : $DEST"
     age -d -i "$IDENTITY" "$ARCHIVE" | tar -xzf - -C "$DEST"
     ;;
@@ -80,4 +92,5 @@ case "$MODE" in
     ;;
 esac
 
+DONE=1
 echo "✅ Restauré dans $DEST"

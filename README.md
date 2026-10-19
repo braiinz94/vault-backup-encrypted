@@ -72,7 +72,9 @@ bin/vault-restore.sh -p archive.tar.gz.age ~/restauration
 age -d -i identite.txt archive.tar.gz.age | tar -xzf - -C ~/restauration
 ```
 
-La destination doit être absente ou vide : rien n'est écrasé. Si `<archive>.sha256` est présent à côté de l'archive, l'empreinte est vérifiée avant tout déchiffrement.
+La destination doit être absente ou vide : rien n'est écrasé. Si `<archive>.sha256` est présent à côté de l'archive, l'empreinte est vérifiée avant tout déchiffrement. Si la restauration échoue en cours de route (mauvaise clé, archive tronquée), le script le signale et ne supprime rien : la destination peut contenir des fichiers partiels, à vérifier ou effacer soi-même.
+
+Côté sauvegarde, un dossier de sortie créé par le script reçoit les droits `700` ; un dossier qui existait déjà (racine d'une clé USB, dossier partagé) garde les siens.
 
 **Tester une restauration** de temps en temps, sur une vraie archive, dans un dossier jetable : une sauvegarde jamais restaurée n'est pas une sauvegarde.
 
@@ -99,7 +101,7 @@ La destination doit être absente ou vide : rien n'est écrasé. Si `<archive>.s
 bash tests/run-tests.sh
 ```
 
-Le test crée un faux coffre dans un dossier temporaire (noms avec espaces et accents, fichier vide, fichier binaire, dossier caché), génère une identité age jetable, sauvegarde, restaure ailleurs et compare les empreintes SHA-256 de tous les fichiers. Il vérifie aussi les exclusions, le refus d'une empreinte fausse, d'une mauvaise identité, d'une destination non vide et des erreurs d'usage. Il ne touche jamais au Trousseau ni au `HOME` réel. La CI (GitHub Actions) l'exécute sur Ubuntu et macOS, plus `shellcheck`.
+Le test crée un faux coffre dans un dossier temporaire (noms avec espaces et accents, fichier vide, fichier binaire, dossier caché), génère une identité age jetable, sauvegarde, restaure ailleurs et compare les empreintes SHA-256 de tous les fichiers. Il vérifie aussi les exclusions, le refus d'une empreinte fausse, d'une mauvaise identité, d'une destination non vide et des erreurs d'usage, le signalement d'une restauration interrompue et la conservation des droits d'un dossier de sortie existant. Il ne touche jamais au Trousseau ni au `HOME` réel. La CI (GitHub Actions) l'exécute sur Ubuntu et macOS, plus `shellcheck`.
 
 ---
 

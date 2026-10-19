@@ -141,6 +141,31 @@ else
   ok "mauvaise identité refusée"
 fi
 
+ERR="$("$BIN/vault-restore.sh" -i "$ID2" "$ARCH" "$WORK/restore5b" 2>&1 >/dev/null || true)"
+if printf '%s' "$ERR" | grep -q 'Restauration interrompue'; then
+  ok "échec de restauration signalé"
+else
+  ko "échec de restauration signalé"
+fi
+
+# 5 bis. identité illisible → aucun dossier créé
+if ! "$BIN/vault-restore.sh" -i "$WORK/absente.txt" "$ARCH" "$WORK/restore5c" >/dev/null 2>&1 \
+   && [ ! -e "$WORK/restore5c" ]; then
+  ok "identité illisible : rien créé"
+else
+  ko "identité illisible : rien créé"
+fi
+
+# 5 ter. dossier de sortie existant : ses droits ne sont pas modifiés
+OUT6="$WORK/out-existant"
+mkdir -p "$OUT6"; chmod 755 "$OUT6"
+"$BIN/vault-backup.sh" -s "$VAULT" -o "$OUT6" -m key -r "$RECIP" >/dev/null
+if [ -n "$(find "$OUT6" -maxdepth 0 -perm 755)" ]; then
+  ok "droits d'un dossier de sortie existant conservés"
+else
+  ko "droits d'un dossier de sortie existant conservés"
+fi
+
 # 6. destination non vide → refus
 if "$BIN/vault-restore.sh" -i "$ID" "$ARCH" "$REST" >/dev/null 2>&1; then
   ko "destination non vide refusée"

@@ -76,7 +76,11 @@ canon_path() {
 case "$(canon_path "$OUT_DIR")/" in
   "$SOURCE"/*) die "le dossier de sortie ne doit pas être dans la source" ;;
 esac
-mkdir -p "$OUT_DIR"; chmod 700 "$OUT_DIR"
+# droits 700 seulement si on crée le dossier : un dossier existant
+# (racine d'une clé USB, dossier partagé) garde ses droits
+if [ ! -d "$OUT_DIR" ]; then
+  mkdir -p "$OUT_DIR"; chmod 700 "$OUT_DIR"
+fi
 OUT_DIR="$(cd "$OUT_DIR" && pwd -P)"
 
 USE_KEY=0
